@@ -189,6 +189,7 @@ class KlippyGtk:
             format_label(b, lines)
         if style is not None:
             b.get_style_context().add_class(style)
+        b.connect("clicked", self.screen.sounds.play, "ui")
         b.connect("clicked", self.screen.screensaver.reset_timeout)
         b.connect("clicked", self.screen.lock_screen.reset_timeout)
         return b

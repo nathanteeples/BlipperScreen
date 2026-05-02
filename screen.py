@@ -26,6 +26,7 @@ from ks_includes.KlippyWebsocket import KlippyWebsocket
 from ks_includes.KlippyRest import KlippyRest
 from ks_includes.files import KlippyFiles
 from ks_includes.KlippyGtk import KlippyGtk
+from ks_includes.sound import SoundManager
 from ks_includes.printer import Printer
 from ks_includes.spoolman_api import SpoolmanAPI
 from ks_includes.widgets.keyboard import Keyboard
@@ -154,6 +155,7 @@ class KlipperScreen(Gtk.Window):
         self.screensaver = ScreenSaver(self)
         self.lock_screen = LockScreen(self)
         self.gtk = KlippyGtk(self)
+        self.sounds = SoundManager(self._config.get_config())
         self.base_css = ""
         self.load_base_styles()
         self.set_icon_from_file(os.path.join(klipperscreendir, "styles", "icon.svg"))
@@ -183,6 +185,7 @@ class KlipperScreen(Gtk.Window):
         autolock = self._config.get_main_config().getint("autolock_timeout", fallback=0)
         self.lock_screen.set_autolock_timeout(autolock)
         self.log_notification("KlipperScreen Started", 1)
+        self.sounds.play("boot")
         self.initial_connection()
         if self._config.get_main_config().getboolean('start_locked', False):
             self.lock_screen.lock(None)
@@ -776,14 +779,18 @@ class KlipperScreen(Gtk.Window):
         self.printer_initializing(msg + "\n" + state, go_to_splash=True)
 
     def state_paused(self):
+        self.sounds.play("paused")
         self.state_printing()
         if self._config.get_main_config().getboolean("auto_open_extrude", fallback=True):
             self.show_panel("extrude")
 
     def state_printing(self):
+        self.sounds.play("started")
         self.show_panel("job_status", remove_all=True)
 
     def state_ready(self, wait=True):
+        if getattr(self.printer, "state", None) in ["printing", "paused"]:
+            self.sounds.play("finished")
         # Do not return to main menu if completing a job, timeouts/user input will return
         if "job_status" in self._cur_panels and wait:
             return
@@ -798,6 +805,7 @@ class KlipperScreen(Gtk.Window):
         self.printer_initializing(_("Klipper is attempting to start"))
 
     def state_shutdown(self):
+        self.sounds.play("shutdown")
         self.printer.stop_tempstore_updates()
         msg = self.printer.get_stat("webhooks", "state_message")
         self.printer_initializing(_("Klipper has shutdown") + "\n\n" + msg, go_to_splash=True)
@@ -840,6 +848,7 @@ class KlipperScreen(Gtk.Window):
             self.printer.process_update({'webhooks': {'state': "disconnected"}})
             return
         elif action == "notify_klippy_shutdown":
+            self.sounds.play("err")
             self.printer.process_update({'webhooks': {'state': "shutdown"}})
             return
         elif action == "notify_klippy_ready":
