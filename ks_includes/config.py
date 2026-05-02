@@ -172,16 +172,16 @@ class KlipperScreenConfig:
                     'invert_x', 'invert_y', 'invert_z', '24htime', 'only_heaters', 'show_cursor', 'confirm_estop',
                     'autoclose_popups', 'use_dpms', 'use_default_menu', 'side_macro_shortcut', 'use-matchbox-keyboard',
                     'show_heater_power', "show_scroll_steppers", "auto_open_extrude", "start_locked",
-                    "keyboard_navigation"
+                    "keyboard_navigation", "sounds_enable", "sounds_mute", "sounds_serial_enable"
                 )
                 strs = (
                     'default_printer', 'language', 'print_sort_dir', 'theme', 'screen_blanking_printing', 'font_size',
                     'print_estimate_method', 'screen_blanking', "screen_on_devices", "screen_off_devices", 'print_view',
-                    "lock_password"
+                    "lock_password", "sounds_command", "sounds_serial_device", "sounds_serial_encoding", "sounds_output"
                 )
                 numbers = (
                     'job_complete_timeout', 'job_error_timeout', 'move_speed_xy', 'move_speed_z',
-                    'print_estimate_compensation', 'width', 'height', 'autolock_timeout',
+                    'print_estimate_compensation', 'width', 'height', 'autolock_timeout', 'sounds_volume',
 
                 )
             elif section.startswith('printer '):
@@ -322,6 +322,23 @@ class KlipperScreenConfig:
                                       "value": "False", "callback": screen.reload_panels}},
             {"auto_open_extrude": {"section": "main", "name": _("Auto-open Extrude On Pause"), "type": "binary",
                                    "value": "True", "callback": screen.reload_panels}},
+            {"sounds_enable": {"section": "main", "name": _("Enable Sounds"), "type": "binary",
+                               "value": "False", "callback": screen.sounds.reload_config}},
+            {"sounds_mute": {"section": "main", "name": _("Mute Sounds"), "type": "binary",
+                             "value": "False", "callback": screen.sounds.reload_config}},
+            {"sounds_volume": {"section": "main", "name": _("Sound Volume"), "type": "scale",
+                               "value": "100", "range": [0, 100], "step": 1,
+                               "callback": screen.set_sounds_volume}},
+            {"sounds_output": {"section": "main", "name": _("Sound Output"), "type": "dropdown",
+                               "value": "both", "callback": screen.sounds.reload_config, "options": [
+                                  {"name": _("Audio"), "value": "audio"},
+                                  {"name": _("Serial"), "value": "serial"},
+                                  {"name": _("Both") + " " + _("(default)"), "value": "both"}
+                               ]}},
+            {"sounds_serial_enable": {"section": "main", "name": _("Enable Serial Sound Bridge"), "type": "binary",
+                                       "value": "False", "callback": screen.sounds.reload_config}},
+            {"sounds_serial_device": {"section": "main", "name": _("Serial Sound Device"), "type": "dropdown",
+                                       "value": "", "callback": screen.sounds.reload_config, "options": []}},
             {"show_cursor": {"section": "main", "name": _("Show cursor"), "type": "binary",
                              "tooltip": _("For mouse control or to verify touchscreen accuracy"),
                              "value": "False", "callback": screen.update_cursor}},
@@ -379,6 +396,16 @@ class KlipperScreenConfig:
                 "name": name,
                 "value": f"{num}"
             })
+
+        serial_devices = ["", *screen.sounds.discover_serial_devices()]
+        for opt in self.configurable_options:
+            key = list(opt)[0]
+            if key == "sounds_serial_device":
+                opt[key]["options"] = [
+                    {"name": _("Disabled") + " " + _("(default)"), "value": ""},
+                    *[{"name": dev, "value": dev} for dev in serial_devices if dev]
+                ]
+                break
 
         for item in self.configurable_options:
             name = list(item)[0]
@@ -559,6 +586,16 @@ class KlipperScreenConfig:
 
     def save_user_config_options(self):
         save_config = configparser.ConfigParser()
+        serial_devices = ["", *screen.sounds.discover_serial_devices()]
+        for opt in self.configurable_options:
+            key = list(opt)[0]
+            if key == "sounds_serial_device":
+                opt[key]["options"] = [
+                    {"name": _("Disabled") + " " + _("(default)"), "value": ""},
+                    *[{"name": dev, "value": dev} for dev in serial_devices if dev]
+                ]
+                break
+
         for item in self.configurable_options:
             name = list(item)[0]
             opt = item[name]
