@@ -39,8 +39,10 @@ class BasePanel(ScreenPanel):
         # Action bar buttons
         self.abscale = self.bts * 1.1
         self.control['back'] = self._gtk.Button('back', scale=self.abscale)
+        self.control['back'].connect("clicked", self._screen.sounds.play, "back")
         self.control['back'].connect("clicked", self.back)
         self.control['home'] = self._gtk.Button('main', scale=self.abscale)
+        self.control['home'].connect("clicked", self._screen.sounds.play, "menu")
         self.control['home'].connect("clicked", self._screen._menu_go_back, True)
         for control in self.control:
             self.set_control_sensitive(False, control)

@@ -112,12 +112,14 @@ class ScreenPanel:
             if callback is not None:
                 callback(value)
 
-    def scale_moved(self, widget, event, section, option):
+    def scale_moved(self, widget, event, section, option, callback=None):
         logging.debug(f"[{section}] {option} changed to {widget.get_value()}")
         if section not in self._config.get_config().sections():
             self._config.get_config().add_section(section)
         self._config.set(section, option, str(int(widget.get_value())))
         self._config.save_user_config_options()
+        if callback is not None:
+            callback(int(widget.get_value()))
 
     def switch_config_option(self, switch, gparam, section, option, callback=None):
         logging.debug(f"[{section}] {option} toggled {switch.get_active()}")
@@ -255,7 +257,8 @@ class ScreenPanel:
             scale.set_hexpand(True)
             scale.set_value(int(self._config.get_config().get(option['section'], opt_name, fallback=option['value'])))
             scale.set_digits(0)
-            scale.connect("button-release-event", self.scale_moved, option['section'], opt_name)
+            scale.connect("button-release-event", self.scale_moved, option['section'], opt_name,
+                          option['callback'] if "callback" in option else None)
             row_box.add(scale)
             setting = {opt_name: scale}
         elif option['type'] == "printer":
