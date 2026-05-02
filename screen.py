@@ -190,6 +190,9 @@ class KlipperScreen(Gtk.Window):
         if self._config.get_main_config().getboolean('start_locked', False):
             self.lock_screen.lock(None)
 
+    def set_sounds_volume(self, value):
+        self.sounds.set_volume(value)
+
     def update_cursor(self, show: bool):
         self.show_cursor = show
         self.gtk.set_cursor(show, window=self.get_window())
