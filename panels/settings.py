@@ -9,7 +9,10 @@ class Panel(ScreenPanel):
     def __init__(self, screen, title):
         title = title or _("Settings")
         super().__init__(screen, title)
-        self.printers = self.settings = self.langs = {}
+        self.printers = {}
+        self.settings = {}
+        self.langs = {}
+        self.audio = {}
         self.menu = ['settings_menu']
         options = self._config.get_configurable_options().copy()
         options.append({"printers": {
@@ -59,7 +62,7 @@ class Panel(ScreenPanel):
         for option in self._config.get_configurable_options():
             key = list(option)[0]
             if key in audio_keys:
-                self.add_option("audio", self.settings, key, option[key])
+                self.add_option("audio", self.audio, key, option[key])
 
         self.labels['printers_menu'] = self._gtk.ScrolledWindow()
         self.labels['printers'] = Gtk.Grid()
