@@ -22,12 +22,19 @@ class Panel(ScreenPanel):
             "type": "menu",
             "menu": "lang"
         }})
+        options.append({"audio": {
+            "name": _("Audio"),
+            "type": "menu",
+            "menu": "audio"
+        }})
         self.labels['settings_menu'] = self._gtk.ScrolledWindow()
         self.labels['settings'] = Gtk.Grid()
         self.labels['settings_menu'].add(self.labels['settings'])
         for option in options:
             name = list(option)[0]
             if name == "use_dpms" and screen.wayland:
+                continue
+            if name in ["sounds_enable", "sounds_mute", "sounds_volume", "sounds_output", "sounds_serial_enable", "sounds_serial_device"]:
                 continue
             self.add_option('settings', self.settings, name, option[name])
 
@@ -41,6 +48,18 @@ class Panel(ScreenPanel):
                 "callback": self._screen.change_language,
             }
             self.add_option("lang", self.langs, lang, self.langs[lang])
+
+        self.labels['audio_menu'] = self._gtk.ScrolledWindow()
+        self.labels['audio'] = Gtk.Grid()
+        self.labels['audio_menu'].add(self.labels['audio'])
+        audio_keys = [
+            "sounds_enable", "sounds_mute", "sounds_volume", "sounds_output",
+            "sounds_serial_enable", "sounds_serial_device"
+        ]
+        for option in self._config.get_configurable_options():
+            key = list(option)[0]
+            if key in audio_keys:
+                self.add_option("audio", self.settings, key, option[key])
 
         self.labels['printers_menu'] = self._gtk.ScrolledWindow()
         self.labels['printers'] = Gtk.Grid()
